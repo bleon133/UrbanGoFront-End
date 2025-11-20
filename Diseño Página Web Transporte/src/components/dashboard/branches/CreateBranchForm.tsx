@@ -321,6 +321,11 @@ export const CreateBranchForm: React.FC<CreateBranchFormProps> = ({ onBack, onSa
       newErrors.push('Debe seleccionar al menos un día laboral');
     }
 
+    // Validación cuenta bancaria (todos obligatorios)
+    if (!formData.accountNumber.trim()) newErrors.push('El número de cuenta bancaria es requerido');
+    if (!formData.accountType.trim()) newErrors.push('El tipo de cuenta es requerido');
+    if (!formData.bank.trim()) newErrors.push('El banco es requerido');
+
     // Validación de coordenadas (obligatorias)
     if (formData.latitude && (isNaN(Number(formData.latitude)) || Number(formData.latitude) < -90 || Number(formData.latitude) > 90)) {
       newErrors.push('La latitud debe ser un número válido entre -90 y 90');

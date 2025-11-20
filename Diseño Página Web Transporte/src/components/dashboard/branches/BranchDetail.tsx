@@ -402,6 +402,11 @@ export const BranchDetail: React.FC<BranchDetailProps> = ({ branch, onBack, onSa
     if (!formData.accountType) newErrors.push('El tipo de cuenta es requerido');
     if (!formData.bank) newErrors.push('Debe seleccionar un banco');
 
+    // Cuenta bancaria obligatoria
+    if (!formData.accountNumber.trim()) newErrors.push('El número de cuenta bancaria es requerido');
+    if (!formData.accountType.trim()) newErrors.push('El tipo de cuenta bancaria es requerido');
+    if (!formData.bank || formData.bank.trim() === '') newErrors.push('El banco es requerido');
+
     return newErrors;
   };
 
