@@ -1,0 +1,30 @@
+export interface Branch {
+  id: string;
+  name: string;
+  legalReason: string;
+  nit: string;
+  legalRepresentative: string;
+  representativeDocument: string;
+  phone: string;
+  email: string;
+  contactPerson: string;
+  address: string;
+  addressDetail?: string;
+  city?: string;
+  neighborhood?: string;
+  cityNeighborhood?: string;
+  latitude?: number;
+  longitude?: number;
+  accountNumber: string;
+  accountType: string;
+  bank: string;
+  openingHours: string;
+  closingHours: string;
+  workDays: string[];
+  photo?: string;
+  isActive: boolean;
+  barrioId?: number | null;
+  ciudadId?: number | null;
+  postalCode?: string;
+  photoPath?: string | null;
+}

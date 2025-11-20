@@ -1,0 +1,872 @@
+import React, { useState } from 'react';
+import { Button } from '../../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Textarea } from '../../ui/textarea';
+import { Alert, AlertDescription } from '../../ui/alert';
+import { ArrowLeft, Save, Eye, EyeOff, Upload, X } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
+
+interface CreateUserFormProps {
+  onBack: () => void;
+  onSave: (userData: any) => void;
+}
+
+export const CreateUserForm: React.FC<CreateUserFormProps> = ({ onBack, onSave }) => {
+  const [formData, setFormData] = useState({
+    userType: '',
+    status: 'active',
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    documentType: '',
+    documentNumber: '',
+    phone: '',
+    birthDate: '',
+    gender: '',
+    // Campos específicos para domiciliarios
+    motorcycleLicenseCategory: '',
+    vehicleCategory: '',
+    licenseNumber: '',
+    emergencyContact: '',
+    emergencyPhone: '',
+    experience: '',
+    rating: '',
+    accountNumber: '',
+    accountType: '',
+    // Campos específicos para clientes
+    homeAddress: '',
+    addressDetail: '',
+    city: '',
+    neighborhood: '',
+    postalCode: ''
+  });
+
+  const [showPasswords, setShowPasswords] = useState({
+    password: false,
+    confirm: false
+  });
+
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
+  const [licenseFrontFile, setLicenseFrontFile] = useState<File | null>(null);
+  const [licenseFrontPreview, setLicenseFrontPreview] = useState<string>('');
+  const [licenseBackFile, setLicenseBackFile] = useState<File | null>(null);
+  const [licenseBackPreview, setLicenseBackPreview] = useState<string>('');
+  const [errors, setErrors] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setErrors([]);
+  };
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setErrors(['El archivo de imagen no debe superar los 5MB']);
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        setErrors(['Por favor seleccione un archivo de imagen válido']);
+        return;
+      }
+
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPhotoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setErrors([]);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview('');
+  };
+
+  const handleLicenseFrontChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(['El archivo de imagen no debe superar los 5MB']);
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        setErrors(['Por favor seleccione un archivo de imagen válido']);
+        return;
+      }
+      setLicenseFrontFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setLicenseFrontPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setErrors([]);
+    }
+  };
+
+  const removeLicenseFront = () => {
+    setLicenseFrontFile(null);
+    setLicenseFrontPreview('');
+  };
+
+  const handleLicenseBackChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(['El archivo de imagen no debe superar los 5MB']);
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        setErrors(['Por favor seleccione un archivo de imagen válido']);
+        return;
+      }
+      setLicenseBackFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setLicenseBackPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setErrors([]);
+    }
+  };
+
+  const removeLicenseBack = () => {
+    setLicenseBackFile(null);
+    setLicenseBackPreview('');
+  };
+
+  const validateForm = (): string[] => {
+    const newErrors: string[] = [];
+
+    // Validaciones básicas
+    if (!formData.userType) newErrors.push('El tipo de usuario es requerido');
+    if (!formData.firstName.trim()) newErrors.push('Los nombres son requeridos');
+    if (!formData.lastName.trim()) newErrors.push('Los apellidos son requeridos');
+    if (!formData.email.trim()) newErrors.push('El correo electrónico es requerido');
+    if (!formData.documentType) newErrors.push('El tipo de documento es requerido');
+    if (!formData.documentNumber.trim()) newErrors.push('El número de documento es requerido');
+
+    // Validación de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      newErrors.push('El formato del correo electrónico es inválido');
+    }
+
+    // Validaciones de contraseña
+    if (!formData.password) {
+      newErrors.push('La contraseña es requerida');
+    } else {
+      if (formData.password.length < 8) {
+        newErrors.push('La contraseña debe tener al menos 8 caracteres');
+      }
+      if (!/(?=.*[a-z])/.test(formData.password)) {
+        newErrors.push('La contraseña debe contener al menos una letra minúscula');
+      }
+      if (!/(?=.*[A-Z])/.test(formData.password)) {
+        newErrors.push('La contraseña debe contener al menos una letra mayúscula');
+      }
+      if (!/(?=.*\d)/.test(formData.password)) {
+        newErrors.push('La contraseña debe contener al menos un número');
+      }
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.push('Las contraseñas no coinciden');
+    }
+
+    // Validaciones específicas para domiciliarios
+    if (formData.userType === 'delivery') {
+      if (!formData.phone.trim()) newErrors.push('El teléfono es requerido para domiciliarios');
+      if (!formData.motorcycleLicenseCategory) newErrors.push('La categoría de moto es requerida');
+      if (!formData.vehicleCategory) newErrors.push('La categoría de vehículo es requerida');
+      if (!formData.licenseNumber.trim()) newErrors.push('El número de licencia es requerido');
+      if (!licenseFrontPreview) newErrors.push('La foto frontal de la licencia es requerida');
+      if (!licenseBackPreview) newErrors.push('La foto posterior de la licencia es requerida');
+      if (!formData.emergencyContact.trim()) newErrors.push('El contacto de emergencia es requerido');
+      if (!formData.emergencyPhone.trim()) newErrors.push('El teléfono de emergencia es requerido');
+      if (formData.rating && (parseFloat(formData.rating) < 0 || parseFloat(formData.rating) > 5)) {
+        newErrors.push('La calificación debe estar entre 0.0 y 5.0');
+      }
+    }
+
+    // Validaciones específicas para clientes
+    if (formData.userType === 'client') {
+      if (!formData.homeAddress.trim()) newErrors.push('La dirección de domicilio es requerida');
+      if (!formData.city.trim()) newErrors.push('La ciudad es requerida');
+    }
+
+    return newErrors;
+  };
+
+  const handleSubmit = async () => {
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors([]);
+
+    try {
+      // Simulación de guardado
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const userData = {
+        id: Date.now().toString(),
+        ...formData,
+        isActive: formData.status === 'active',
+        profilePhoto: photoPreview || undefined,
+        licenseFrontPhoto: licenseFrontPreview || undefined,
+        licenseBackPhoto: licenseBackPreview || undefined
+      };
+
+      onSave(userData);
+    } catch (error) {
+      setErrors(['Error al crear el usuario. Inténtelo de nuevo.']);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          disabled={isLoading}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Regresar
+        </Button>
+        <h1 className="text-2xl font-bold">Crear Nuevo Usuario</h1>
+      </div>
+
+      {/* Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Información del Usuario</CardTitle>
+          <CardDescription>
+            Complete todos los campos requeridos para crear un nuevo usuario
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {errors.length > 0 && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                <ul className="list-disc list-inside space-y-1">
+                  {errors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Foto de Perfil */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Foto de Perfil</h3>
+            
+            <div className="flex items-start space-x-6">
+              <div className="flex flex-col items-center space-y-4">
+                <Avatar className="h-32 w-32">
+                  <AvatarImage src={photoPreview} alt="Vista previa" />
+                  <AvatarFallback className="text-4xl">
+                    {formData.firstName?.charAt(0) || formData.lastName?.charAt(0) || '?'}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('photo-upload')?.click()}
+                    disabled={isLoading}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {photoPreview ? 'Cambiar foto' : 'Subir foto'}
+                  </Button>
+                  
+                  {photoPreview && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removePhoto}
+                      disabled={isLoading}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Quitar
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">
+                  Sube una foto de perfil del usuario. Formatos soportados: JPG, PNG, GIF. Tamaño máximo: 5MB.
+                </p>
+              </div>
+            </div>
+            
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+          </div>
+
+          {/* Tipo de Usuario y Estado */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Tipo de usuario *</Label>
+              <Select 
+                value={formData.userType} 
+                onValueChange={(value) => handleInputChange('userType', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione el tipo de usuario" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrativo</SelectItem>
+                  <SelectItem value="delivery">Domiciliario</SelectItem>
+                  <SelectItem value="client">Cliente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Estado *</Label>
+              <Select 
+                value={formData.status} 
+                onValueChange={(value) => handleInputChange('status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione el estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Activo</SelectItem>
+                  <SelectItem value="inactive">Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Información Personal */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">Nombres *</Label>
+              <Input
+                id="firstName"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                placeholder="Nombres"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Apellidos *</Label>
+              <Input
+                id="lastName"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                placeholder="Apellidos"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Correo electrónico *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="usuario@ejemplo.com"
+            />
+          </div>
+
+          {/* Contraseñas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña *</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPasswords.password ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  placeholder="Contraseña"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, password: !prev.password }))}
+                >
+                  {showPasswords.password ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar contraseña *</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showPasswords.confirm ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  placeholder="Confirmar contraseña"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                >
+                  {showPasswords.confirm ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>La contraseña debe cumplir con los siguientes requisitos:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Mínimo 8 caracteres</li>
+              <li>Al menos una letra minúscula</li>
+              <li>Al menos una letra mayúscula</li>
+              <li>Al menos un número</li>
+            </ul>
+          </div>
+
+          {/* Documento */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Tipo de documento *</Label>
+              <Select 
+                value={formData.documentType} 
+                onValueChange={(value) => handleInputChange('documentType', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tipo de documento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cedula">Cédula de ciudadanía</SelectItem>
+                  <SelectItem value="cedula-extranjeria">Cédula de extranjería</SelectItem>
+                  <SelectItem value="pasaporte">Pasaporte</SelectItem>
+                  <SelectItem value="dni">DNI</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="documentNumber">Número de documento *</Label>
+              <Input
+                id="documentNumber"
+                value={formData.documentNumber}
+                onChange={(e) => handleInputChange('documentNumber', e.target.value)}
+                placeholder="Número de documento"
+              />
+            </div>
+          </div>
+
+          {/* Información adicional */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone">Teléfono {formData.userType === 'delivery' && '*'}</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="Número de teléfono"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="birthDate">Fecha de nacimiento</Label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={formData.birthDate}
+                onChange={(e) => handleInputChange('birthDate', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Género</Label>
+            <Select 
+              value={formData.gender || undefined} 
+              onValueChange={(value) => handleInputChange('gender', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccione el género" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="masculino">Masculino</SelectItem>
+                <SelectItem value="femenino">Femenino</SelectItem>
+                <SelectItem value="otro">Otro</SelectItem>
+                <SelectItem value="prefiero-no-decir">Prefiero no decir</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Campos específicos para domiciliarios */}
+          {formData.userType === 'delivery' && (
+            <>
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Información Laboral - Domiciliario</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Categoría de moto *</Label>
+                    <Select 
+                      value={formData.motorcycleLicenseCategory} 
+                      onValueChange={(value) => handleInputChange('motorcycleLicenseCategory', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione la categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A1">A1 - Motocicletas hasta 125 cc</SelectItem>
+                        <SelectItem value="A2">A2 - Motocicletas de cualquier cilindrada</SelectItem>
+                        <SelectItem value="B1">B1 - Automóviles, motocarros y cuatrimotos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Categoría de vehículo *</Label>
+                    <Select 
+                      value={formData.vehicleCategory} 
+                      onValueChange={(value) => handleInputChange('vehicleCategory', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione la categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A1">A1 - Motos hasta 125 cc</SelectItem>
+                        <SelectItem value="A2">A2 - Motos de cualquier cilindrada</SelectItem>
+                        <SelectItem value="B1">B1 - Automóviles</SelectItem>
+                        <SelectItem value="B2">B2 - Camionetas y camperos</SelectItem>
+                        <SelectItem value="B3">B3 - Vehículos de servicio público</SelectItem>
+                        <SelectItem value="C1">C1 - Camiones rígidos</SelectItem>
+                        <SelectItem value="C2">C2 - Camiones articulados</SelectItem>
+                        <SelectItem value="C3">C3 - Vehículos articulados pesados</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="licenseNumber">Número de licencia *</Label>
+                  <Input
+                    id="licenseNumber"
+                    value={formData.licenseNumber}
+                    onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
+                    placeholder="Número de licencia de conducción"
+                  />
+                </div>
+
+                {/* Fotos de Licencia */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Foto de licencia frontal *</Label>
+                    <div className="border-2 border-dashed rounded-lg p-4">
+                      {licenseFrontPreview ? (
+                        <div className="space-y-2">
+                          <img 
+                            src={licenseFrontPreview} 
+                            alt="Licencia frontal" 
+                            className="w-full h-40 object-cover rounded"
+                          />
+                          <div className="flex space-x-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => document.getElementById('license-front-upload')?.click()}
+                              className="flex-1"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Cambiar
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={removeLicenseFront}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('license-front-upload')?.click()}
+                          className="w-full"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Subir foto frontal
+                        </Button>
+                      )}
+                    </div>
+                    <input
+                      id="license-front-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLicenseFrontChange}
+                      className="hidden"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Foto de licencia posterior *</Label>
+                    <div className="border-2 border-dashed rounded-lg p-4">
+                      {licenseBackPreview ? (
+                        <div className="space-y-2">
+                          <img 
+                            src={licenseBackPreview} 
+                            alt="Licencia posterior" 
+                            className="w-full h-40 object-cover rounded"
+                          />
+                          <div className="flex space-x-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => document.getElementById('license-back-upload')?.click()}
+                              className="flex-1"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Cambiar
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={removeLicenseBack}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('license-back-upload')?.click()}
+                          className="w-full"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Subir foto posterior
+                        </Button>
+                      )}
+                    </div>
+                    <input
+                      id="license-back-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLicenseBackChange}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="emergencyContact">Contacto de emergencia *</Label>
+                    <Input
+                      id="emergencyContact"
+                      value={formData.emergencyContact}
+                      onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
+                      placeholder="Nombre del contacto"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emergencyPhone">Teléfono de emergencia *</Label>
+                    <Input
+                      id="emergencyPhone"
+                      value={formData.emergencyPhone}
+                      onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
+                      placeholder="Teléfono de emergencia"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="experience">Experiencia previa</Label>
+                  <Textarea
+                    id="experience"
+                    value={formData.experience}
+                    onChange={(e) => handleInputChange('experience', e.target.value)}
+                    placeholder="Describa su experiencia previa en domicilios..."
+                    rows={4}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="rating">Calificación (0.0 - 5.0)</Label>
+                    <Input
+                      id="rating"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="5"
+                      value={formData.rating}
+                      onChange={(e) => handleInputChange('rating', e.target.value)}
+                      placeholder="0.0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Número de cuenta bancaria</Label>
+                    <Input
+                      id="accountNumber"
+                      value={formData.accountNumber}
+                      onChange={(e) => handleInputChange('accountNumber', e.target.value)}
+                      placeholder="Número de cuenta"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Tipo de cuenta</Label>
+                  <Select 
+                    value={formData.accountType} 
+                    onValueChange={(value) => handleInputChange('accountType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tipo de cuenta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ahorros">Ahorros</SelectItem>
+                      <SelectItem value="corriente">Corriente</SelectItem>
+                      <SelectItem value="nequi">Nequi</SelectItem>
+                      <SelectItem value="daviplata">Daviplata</SelectItem>
+                      <SelectItem value="otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Campos específicos para clientes */}
+          {formData.userType === 'client' && (
+            <>
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Información de Domicilio - Cliente</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="homeAddress">Dirección de domicilio *</Label>
+                  <Input
+                    id="homeAddress"
+                    value={formData.homeAddress}
+                    onChange={(e) => handleInputChange('homeAddress', e.target.value)}
+                    placeholder="Calle 123 # 45-67"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="addressDetail">Detalle del domicilio</Label>
+                  <Textarea
+                    id="addressDetail"
+                    value={formData.addressDetail}
+                    onChange={(e) => handleInputChange('addressDetail', e.target.value)}
+                    placeholder="Apartamento 201, Torre B, etc."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Ciudad *</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      placeholder="Bogotá, Medellín, Cali..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="neighborhood">Barrio</Label>
+                    <Input
+                      id="neighborhood"
+                      value={formData.neighborhood}
+                      onChange={(e) => handleInputChange('neighborhood', e.target.value)}
+                      placeholder="Nombre del barrio"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="postalCode">Código postal</Label>
+                  <Input
+                    id="postalCode"
+                    value={formData.postalCode}
+                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                    placeholder="110111"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Actions */}
+          <div className="flex space-x-4 pt-6">
+            <Button 
+              variant="outline" 
+              onClick={onBack}
+              className="flex-1"
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              className="flex-1"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Save className="mr-2 h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Guardar Usuario
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
