@@ -5,15 +5,9 @@ import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
-import { BranchOption, Vehicle } from './types';
+import { BranchOption, Vehicle, TransportTypeOption } from './types';
 import { Badge } from '../../ui/badge';
 import { Trash2, Eye, Plus, FilterX, Search } from 'lucide-react';
-
-const VEHICLE_TYPES = [
-  { value: 'moto', label: 'Moto' },
-  { value: 'patineta-electrica', label: 'Patineta Electrica' },
-  { value: 'bicicleta', label: 'Bicicleta' },
-];
 
 const STATUS_OPTIONS = [
   { value: 'disponible', label: 'Disponible' },
@@ -25,6 +19,7 @@ const STATUS_OPTIONS = [
 interface VehiclesTableProps {
   vehicles: Vehicle[];
   branches: BranchOption[];
+  transportTypes: TransportTypeOption[];
   filters: { search: string; type: string; status: string; branch: string };
   onFilterChange: (key: 'search' | 'type' | 'status' | 'branch', value: string) => void;
   onApplyFilters: () => void;
@@ -39,6 +34,7 @@ interface VehiclesTableProps {
 export const VehiclesTable: React.FC<VehiclesTableProps> = ({
   vehicles,
   branches,
+  transportTypes,
   filters,
   onFilterChange,
   onApplyFilters,
@@ -100,9 +96,9 @@ export const VehiclesTable: React.FC<VehiclesTableProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {VEHICLE_TYPES.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                {transportTypes.map((option) => (
+                  <SelectItem key={option.id} value={option.name}>
+                    {option.name}
                   </SelectItem>
                 ))}
               </SelectContent>

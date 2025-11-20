@@ -32,3 +32,8 @@ export interface BranchOption {
   id: string;
   name: string;
 }
+
+export interface TransportTypeOption {
+  id: string;
+  name: string;
+}

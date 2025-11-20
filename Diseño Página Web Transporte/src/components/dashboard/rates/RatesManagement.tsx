@@ -5,6 +5,7 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Alert, AlertDescription } from '../../ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { DollarSign, Bike, Package, Truck, Save, Edit, Clock, Info, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { api } from '../../../services/api';
@@ -13,6 +14,7 @@ type VehicleRate = {
   id?: string;
   tipoVehiculo: string;
   tarifaHora: number;
+  tarifaDia?: number | null;
   tarifaSemana?: number | null;
   depositoGarantia?: number | null;
 };
@@ -23,6 +25,7 @@ export const RatesManagement: React.FC = () => {
   const [isLoadingVehicles, setIsLoadingVehicles] = useState(false);
   const [vehicleError, setVehicleError] = useState<string | null>(null);
   const [vehicleRates, setVehicleRates] = useState<VehicleRate[]>([]);
+  const [transportTypes, setTransportTypes] = useState<Array<{ id: string; name: string }>>([]);
 
   const formatCurrency = (amount: number | null | undefined) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(
@@ -39,6 +42,7 @@ export const RatesManagement: React.FC = () => {
           id: String(item.id),
           tipoVehiculo: item.tipoVehiculo || '',
           tarifaHora: Number(item.tarifaHora || 0),
+          tarifaDia: item.tarifaDia != null ? Number(item.tarifaDia) : null,
           tarifaSemana: item.tarifaSemana != null ? Number(item.tarifaSemana) : null,
           depositoGarantia: item.depositoGarantia != null ? Number(item.depositoGarantia) : null,
         })),
@@ -50,9 +54,24 @@ export const RatesManagement: React.FC = () => {
     }
   }, []);
 
+  const fetchTransportTypes = useCallback(async () => {
+    try {
+      const data = await api.get<Array<any>>('/transport-types');
+      setTransportTypes(
+        data.map((t: any) => ({
+          id: String(t.id),
+          name: t.nombre || '',
+        })),
+      );
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     fetchVehicleRates();
-  }, [fetchVehicleRates]);
+    fetchTransportTypes();
+  }, [fetchVehicleRates, fetchTransportTypes]);
 
   const handleVehicleRateChange = (index: number, field: keyof VehicleRate, value: string) => {
     const next = [...vehicleRates];
@@ -66,7 +85,7 @@ export const RatesManagement: React.FC = () => {
   const handleAddVehicleRate = () => {
     setVehicleRates((prev) => [
       ...prev,
-      { tipoVehiculo: '', tarifaHora: 0, tarifaSemana: null, depositoGarantia: null },
+      { tipoVehiculo: '', tarifaHora: 0, tarifaDia: null, tarifaSemana: null, depositoGarantia: null },
     ]);
     setIsEditing('vehicles');
   };
@@ -97,6 +116,7 @@ export const RatesManagement: React.FC = () => {
           const payload = {
             tipoVehiculo: rate.tipoVehiculo.trim(),
             tarifaHora: rate.tarifaHora,
+            tarifaDia: rate.tarifaDia,
             tarifaSemana: rate.tarifaSemana,
             depositoGarantia: rate.depositoGarantia,
           };
@@ -173,7 +193,7 @@ export const RatesManagement: React.FC = () => {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
-                  Tarifas de alquiler
+                  Tarifas de vehículos
                 </span>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={handleAddVehicleRate}>
@@ -227,12 +247,21 @@ export const RatesManagement: React.FC = () => {
                             {isEditing === 'vehicles' ? (
                               <>
                                 <Label htmlFor={`tipo-${index}`}>Tipo de vehiculo</Label>
-                                <Input
-                                  id={`tipo-${index}`}
+                                <Select
                                   value={rate.tipoVehiculo}
-                                  onChange={(e) => handleVehicleRateChange(index, 'tipoVehiculo', e.target.value)}
-                                  placeholder="Moto, Bicicleta..."
-                                />
+                                  onValueChange={(value) => handleVehicleRateChange(index, 'tipoVehiculo', value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione el tipo" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {transportTypes.map((option) => (
+                                      <SelectItem key={option.id} value={option.name}>
+                                        {option.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </>
                             ) : (
                               <h3 className="font-semibold text-lg">{rate.tipoVehiculo || 'Nuevo vehiculo'}</h3>
@@ -251,7 +280,7 @@ export const RatesManagement: React.FC = () => {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
                         <div className="space-y-1">
                           <Label htmlFor={`hora-${index}`}>Tarifa por hora</Label>
                           {isEditing === 'vehicles' ? (
@@ -265,6 +294,23 @@ export const RatesManagement: React.FC = () => {
                           ) : (
                             <div className="p-2 bg-white rounded border font-medium">
                               {formatCurrency(rate.tarifaHora)}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label htmlFor={`dia-${index}`}>Tarifa por día (opcional)</Label>
+                          {isEditing === 'vehicles' ? (
+                            <Input
+                              id={`dia-${index}`}
+                              type="number"
+                              value={rate.tarifaDia ?? ''}
+                              onChange={(e) => handleVehicleRateChange(index, 'tarifaDia', e.target.value)}
+                              placeholder="30000"
+                            />
+                          ) : (
+                            <div className="p-2 bg-white rounded border font-medium">
+                              {rate.tarifaDia != null ? formatCurrency(rate.tarifaDia) : 'No definida'}
                             </div>
                           )}
                         </div>

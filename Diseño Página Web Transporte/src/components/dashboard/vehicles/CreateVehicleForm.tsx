@@ -6,13 +6,7 @@ import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Alert, AlertDescription } from '../../ui/alert';
 import { Upload, X, Save, ArrowLeft } from 'lucide-react';
-import { BranchOption, VehiclePayload } from './types';
-
-const VEHICLE_TYPES = [
-  { value: 'moto', label: 'Moto' },
-  { value: 'patineta-electrica', label: 'Patineta Electrica' },
-  { value: 'bicicleta', label: 'Bicicleta' },
-];
+import { BranchOption, VehiclePayload, TransportTypeOption } from './types';
 
 const STATUS_OPTIONS = [
   { value: 'disponible', label: 'Disponible' },
@@ -23,11 +17,12 @@ const STATUS_OPTIONS = [
 
 interface CreateVehicleFormProps {
   branches: BranchOption[];
+  transportTypes: TransportTypeOption[];
   onBack: () => void;
   onSave: (vehicle: VehiclePayload, photoFile: File | null) => Promise<void>;
 }
 
-export const CreateVehicleForm: React.FC<CreateVehicleFormProps> = ({ branches, onBack, onSave }) => {
+export const CreateVehicleForm: React.FC<CreateVehicleFormProps> = ({ branches, transportTypes, onBack, onSave }) => {
   const [formData, setFormData] = useState<VehiclePayload>({
     type: '',
     brand: '',
@@ -141,9 +136,9 @@ export const CreateVehicleForm: React.FC<CreateVehicleFormProps> = ({ branches, 
                   <SelectValue placeholder="Seleccione el tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {VEHICLE_TYPES.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {transportTypes.map((option) => (
+                    <SelectItem key={option.id} value={option.name}>
+                      {option.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { VehiclesTable } from './VehiclesTable';
 import { CreateVehicleForm } from './CreateVehicleForm';
 import { VehicleDetail } from './VehicleDetail';
-import { BranchOption, Vehicle, VehiclePayload } from './types';
+import { BranchOption, Vehicle, VehiclePayload, TransportTypeOption } from './types';
 import { api } from '../../../services/api';
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '';
@@ -71,6 +71,7 @@ export const VehiclesManagement: React.FC = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [branches, setBranches] = useState<BranchOption[]>([]);
+  const [transportTypes, setTransportTypes] = useState<TransportTypeOption[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +88,20 @@ export const VehiclesManagement: React.FC = () => {
       setBranches(mapped);
     } catch (error) {
       console.error('Error cargando sucursales', error);
+    }
+  }, []);
+
+  const fetchTransportTypes = useCallback(async () => {
+    try {
+      const data = await api.get<Array<any>>('/transport-types');
+      setTransportTypes(
+        data.map((t: any) => ({
+          id: String(t.id),
+          name: t.nombre || '',
+        })),
+      );
+    } catch (error) {
+      console.error('Error cargando tipos de transporte', error);
     }
   }, []);
 
@@ -112,7 +127,8 @@ export const VehiclesManagement: React.FC = () => {
 
   useEffect(() => {
     fetchBranches();
-  }, [fetchBranches]);
+    fetchTransportTypes();
+  }, [fetchBranches, fetchTransportTypes]);
 
   useEffect(() => {
     fetchVehicles();
@@ -234,6 +250,7 @@ export const VehiclesManagement: React.FC = () => {
       <VehicleDetail
         vehicle={selectedVehicle}
         branches={branches}
+        transportTypes={transportTypes}
         onBack={handleBackToTable}
         onSave={handleUpdateVehicle}
         onDelete={handleDeleteVehicle}
@@ -245,6 +262,7 @@ export const VehiclesManagement: React.FC = () => {
     return (
       <CreateVehicleForm
         branches={branches}
+        transportTypes={transportTypes}
         onBack={handleBackToTable}
         onSave={handleSaveVehicle}
       />
@@ -254,6 +272,7 @@ export const VehiclesManagement: React.FC = () => {
   return (
     <VehiclesTable
       branches={branches}
+      transportTypes={transportTypes}
       vehicles={vehicles}
       filters={filters}
       onFilterChange={handleFilterChange}

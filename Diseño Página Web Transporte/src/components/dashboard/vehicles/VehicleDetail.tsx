@@ -5,14 +5,8 @@ import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Alert, AlertDescription } from '../../ui/alert';
-import { BranchOption, Vehicle, VehiclePayload } from './types';
+import { BranchOption, Vehicle, VehiclePayload, TransportTypeOption } from './types';
 import { ArrowLeft, Save, Trash2, Upload, X } from 'lucide-react';
-
-const VEHICLE_TYPES = [
-  { value: 'moto', label: 'Moto' },
-  { value: 'patineta-electrica', label: 'Patineta Electrica' },
-  { value: 'bicicleta', label: 'Bicicleta' },
-];
 
 const STATUS_OPTIONS = [
   { value: 'disponible', label: 'Disponible' },
@@ -24,12 +18,13 @@ const STATUS_OPTIONS = [
 interface VehicleDetailProps {
   vehicle: Vehicle;
   branches: BranchOption[];
+  transportTypes: TransportTypeOption[];
   onBack: () => void;
   onSave: (vehicle: VehiclePayload, photoFile: File | null) => Promise<Vehicle | null>;
   onDelete: (vehicle: Vehicle) => Promise<void>;
 }
 
-export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, branches, onBack, onSave, onDelete }) => {
+export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, branches, transportTypes, onBack, onSave, onDelete }) => {
   const [formData, setFormData] = useState<VehiclePayload>({
     id: vehicle.id,
     type: vehicle.type,
@@ -137,7 +132,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, branches,
 
       <Card>
         <CardHeader>
-          <CardTitle>{vehicle.brand || 'Transporte'} · {vehicle.licensePlate || vehicle.model}</CardTitle>
+          <CardTitle>{vehicle.brand || 'Transporte'} - {vehicle.licensePlate || vehicle.model}</CardTitle>
           <CardDescription>Edita la información del transporte y actualiza su estado.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -161,9 +156,9 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, branches,
                   <SelectValue placeholder="Seleccione el tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {VEHICLE_TYPES.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {transportTypes.map((option) => (
+                    <SelectItem key={option.id} value={option.name}>
+                      {option.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -299,3 +294,5 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, branches,
     </form>
   );
 };
+
+
