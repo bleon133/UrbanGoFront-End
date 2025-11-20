@@ -24,6 +24,11 @@ interface User {
   emergencyContact?: string;
   emergencyPhone?: string;
   experience?: string;
+  homeAddress?: string;
+  addressDetail?: string;
+  city?: string;
+  neighborhood?: string;
+  postalCode?: string;
   isActive: boolean;
 }
 
@@ -80,6 +85,11 @@ export const GestionarUsuarios: React.FC = () => {
         emergencyContact: detail.contactoEmergencia || detail.contacto_emergencia,
         emergencyPhone: detail.numeroEmergencia || detail.numero_emergencia,
         experience: detail.experienciaPrevia || detail.experiencia_previa,
+        homeAddress: detail.homeAddress || detail.direccion || detail.direccionCompleta || detail.direccion_completa || '',
+        addressDetail: detail.addressDetail || detail.detalleDireccion || detail.detalle_direccion || '',
+        city: detail.cityName || detail.ciudadNombre || detail.ciudad_nombre || '',
+        neighborhood: detail.neighborhoodName || detail.barrioNombre || detail.barrio_nombre || '',
+        postalCode: detail.postalCode || detail.codigoPostal || detail.codigo_postal || '',
         isActive: detail.estado === 'ACTIVO'
       } as any;
       setSelectedUser(mapped);

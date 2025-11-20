@@ -39,6 +39,7 @@ const prepareBranch = (branch: Branch): Branch => {
     accountNumber: branch.accountNumber || '',
     accountType: branch.accountType || '',
     bank: branch.bank || '',
+    accountId: branch.accountId ?? null,
     openingHours: branch.openingHours || '',
     closingHours: branch.closingHours || '',
   };
@@ -61,10 +62,10 @@ const mapSummaryToBranch = (summary: any): Branch => ({
   cityNeighborhood: '',
   latitude: undefined,
   longitude: undefined,
-  postalCode: '',
   accountNumber: '',
   accountType: '',
   bank: '',
+  accountId: null,
   openingHours: '',
   closingHours: '',
   workDays: [],
@@ -96,9 +97,10 @@ const mapDetailToBranch = (detail: any): Branch => {
     latitude: normalizeNumber(detail.latitud),
     longitude: normalizeNumber(detail.longitud),
     postalCode: detail.codigoPostal || '',
-    accountNumber: '',
-    accountType: '',
-    bank: '',
+    accountNumber: detail.numeroCuentaBancaria || '',
+    accountType: detail.tipoCuentaBancaria || '',
+    bank: detail.bancoId != null ? String(detail.bancoId) : '',
+    accountId: detail.cuentaBancariaId != null ? Number(detail.cuentaBancariaId) : null,
     openingHours: detail.horarioApertura || '',
     closingHours: detail.horarioCierre || '',
     workDays: detail.diasAtencion || [],
@@ -106,7 +108,6 @@ const mapDetailToBranch = (detail: any): Branch => {
     isActive: true,
     barrioId: detail.barrioId != null ? Number(detail.barrioId) : null,
     ciudadId: detail.ciudadId != null ? Number(detail.ciudadId) : null,
-    postalCode: detail.codigoPostal || '',
     photoPath: detail.foto ?? null,
   };
 };
@@ -129,6 +130,9 @@ const buildRequestPayload = (data: Branch) => ({
   horarioApertura: valueOrUndefined(data.openingHours),
   horarioCierre: valueOrUndefined(data.closingHours),
   diasAtencion: (data.workDays || []).filter(Boolean),
+  numeroCuenta: valueOrUndefined(data.accountNumber),
+  tipoCuenta: valueOrUndefined(data.accountType),
+  bancoId: normalizeNumber(data.bank),
 });
 
 export const BranchesManagement: React.FC = () => {

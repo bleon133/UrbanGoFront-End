@@ -22,6 +22,28 @@ interface BranchDetailProps {
 
 type Option = { id: string; nombre: string };
 
+const mapBankOption = (item: any): Option | null => {
+  if (!item || typeof item !== 'object') return null;
+  const id =
+    item.id ??
+    item.id_banco ??
+    item.idBanco ??
+    item.codigo ??
+    item.codigo_banco ??
+    item.codigoBanco ??
+    null;
+  const nombre =
+    item.nombre ??
+    item.nombre_banco ??
+    item.nombreBanco ??
+    item.descripcion ??
+    item.alias ??
+    item.codigo ??
+    null;
+  if (id == null || !nombre) return null;
+  return { id: String(id), nombre: String(nombre) };
+};
+
 const normalizeBranch = (incoming: Branch): Branch => {
   const parts = incoming.cityNeighborhood?.split(',') ?? [];
   const cityFromCombo = parts[0]?.trim();
@@ -90,6 +112,9 @@ export const BranchDetail: React.FC<BranchDetailProps> = ({ branch, onBack, onSa
   const [marker, setMarker] = useState<any>(null);
   const [cities, setCities] = useState<Option[]>([]);
   const [barrios, setBarrios] = useState<Option[]>([]);
+  const [banks, setBanks] = useState<Option[]>([]);
+  const [banksLoading, setBanksLoading] = useState(false);
+  const [banksError, setBanksError] = useState<string | null>(null);
 
   const daysOfWeek = [
     { id: 'lunes', label: 'Lunes' },
@@ -147,6 +172,35 @@ export const BranchDetail: React.FC<BranchDetailProps> = ({ branch, onBack, onSa
       }
     })();
   }, [formData.ciudadId]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setBanksLoading(true);
+      setBanksError(null);
+      try {
+        const data = await api.get<Array<any>>('/catalogos/bancos');
+        const mapped = data
+          .map(mapBankOption)
+          .filter(Boolean) as Option[];
+        if (active) {
+          setBanks(mapped);
+        }
+      } catch (error) {
+        console.error('Error cargando bancos', error);
+        if (active) {
+          setBanksError('No se pudieron cargar los bancos.');
+        }
+      } finally {
+        if (active) {
+          setBanksLoading(false);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Load Leaflet map
   useEffect(() => {
@@ -872,19 +926,23 @@ export const BranchDetail: React.FC<BranchDetailProps> = ({ branch, onBack, onSa
             <Select 
               value={formData.bank} 
               onValueChange={(value) => handleInputChange('bank', value)}
-              disabled={!isEditing}
+              disabled={!isEditing || (banksLoading && !banks.length)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Banco" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="bancolombia">Bancolombia</SelectItem>
-                <SelectItem value="banco-bogota">Banco de Bogotá</SelectItem>
-                <SelectItem value="davivienda">Davivienda</SelectItem>
-                <SelectItem value="bbva">BBVA</SelectItem>
-                <SelectItem value="banco-popular">Banco Popular</SelectItem>
-                <SelectItem value="colpatria">Colpatria</SelectItem>
-                <SelectItem value="otro">Otro</SelectItem>
+                {banks.length > 0 ? (
+                  banks.map((bankOption) => (
+                    <SelectItem key={bankOption.id} value={bankOption.id}>
+                      {bankOption.nombre}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="__no_banks" disabled>
+                    {banksLoading ? 'Cargando bancos...' : banksError || 'No hay bancos disponibles'}
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

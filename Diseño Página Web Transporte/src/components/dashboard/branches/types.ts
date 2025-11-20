@@ -18,6 +18,7 @@ export interface Branch {
   accountNumber: string;
   accountType: string;
   bank: string;
+  accountId?: number | null;
   openingHours: string;
   closingHours: string;
   workDays: string[];
