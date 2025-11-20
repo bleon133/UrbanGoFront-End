@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '../ui/sheet';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
-import { DeliverySidebar } from './DeliverySidebar';
+import { DeliverySidebar, DELIVERY_SECTION_MODULES } from './DeliverySidebar';
 import { AvailableDeliveries } from './delivery/AvailableDeliveries';
 import { ActiveDeliveries } from './delivery/ActiveDeliveries';
 import { VehicleDeliveries } from './delivery/VehicleDeliveries';
@@ -26,17 +26,58 @@ import {
   Truck,
   AlertCircle
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+type DeliverySection = keyof typeof DELIVERY_SECTION_MODULES;
+
+const DELIVERY_SECTION_ORDER: DeliverySection[] = [
+  'dashboard',
+  'available',
+  'active',
+  'vehicle-deliveries',
+  'ratings',
+  'profile',
+];
 
 export const DeliveryDashboard: React.FC = () => {
-  const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const { user, permissions } = useAuth();
+
+  const canAccessSection = useCallback(
+    (section: DeliverySection) => {
+      const moduleKey = DELIVERY_SECTION_MODULES[section];
+      if (!moduleKey) return true;
+      const modulePerm = permissions[moduleKey];
+      return modulePerm ? modulePerm.puedeVer : true;
+    },
+    [permissions]
+  );
+
+  const getFirstAllowedSection = useCallback((): DeliverySection => {
+    return DELIVERY_SECTION_ORDER.find(section => canAccessSection(section)) ?? 'dashboard';
+  }, [canAccessSection]);
+
+  const [activeSection, setActiveSection] = useState<DeliverySection>(() => getFirstAllowedSection());
   const [hasActiveDelivery, setHasActiveDelivery] = useState(true); // Mock: domiciliario tiene domicilio activo
   const [isAvailable, setIsAvailable] = useState(true); // Estado de disponibilidad laboral
+
+  useEffect(() => {
+    if (!canAccessSection(activeSection)) {
+      setActiveSection(getFirstAllowedSection());
+    }
+  }, [activeSection, canAccessSection, getFirstAllowedSection]);
+
+  const handleSectionChange = useCallback(
+    (section: DeliverySection) => {
+      if (!canAccessSection(section)) return;
+      setActiveSection(section);
+    },
+    [canAccessSection]
+  );
 
   const handleAcceptDelivery = (deliveryId: string) => {
     console.log('Domicilio aceptado:', deliveryId);
     setHasActiveDelivery(true);
-    setActiveSection('active'); // Redirigir a la vista de domicilio activo
+    handleSectionChange('active'); // Redirigir a la vista de domicilio activo
   };
 
   const renderDashboardContent = () => {
@@ -45,24 +86,35 @@ export const DeliveryDashboard: React.FC = () => {
       { label: 'En Curso', value: '2', icon: Navigation },
       { label: 'Mi Calificación', value: '4.9/5', icon: Star },
       { label: 'Tiempo Activo', value: '6.5 hrs', icon: Clock }
-    ];
+    ].filter(action => canAccessSection(action.id));
 
-    const quickActions = [
+    const quickActions: Array<{
+      id: DeliverySection;
+      title: string;
+      description: string;
+      icon: LucideIcon;
+      color: string;
+      count: string | null;
+      onClick: () => void;
+    }> = [
       {
+        id: 'vehicle-deliveries',
+        id: 'available',
         title: 'Solicitudes',
         description: 'Domicilios disponibles',
         icon: Package,
         color: 'bg-blue-500',
         count: hasActiveDelivery ? null : '5',
-        onClick: () => setActiveSection('available')
+        onClick: () => handleSectionChange('available')
       },
       {
+        id: 'active',
         title: 'Mis Entregas',
         description: 'Domicilios activos',
         icon: Navigation,
         color: 'bg-green-500',
         count: hasActiveDelivery ? '2' : null,
-        onClick: () => setActiveSection('active')
+        onClick: () => handleSectionChange('active')
       },
       {
         title: 'Entregas Vehículos',
@@ -70,7 +122,7 @@ export const DeliveryDashboard: React.FC = () => {
         icon: Truck,
         color: 'bg-purple-500',
         count: '1',
-        onClick: () => setActiveSection('vehicle-deliveries')
+        onClick: () => handleSectionChange('vehicle-deliveries')
       }
     ];
 
@@ -286,7 +338,7 @@ export const DeliveryDashboard: React.FC = () => {
                     <Button 
                       variant="default" 
                       className="w-full"
-                      onClick={() => setActiveSection('available')}
+                      onClick={() => handleSectionChange('available')}
                     >
                       Ver Solicitudes Disponibles
                     </Button>
@@ -363,7 +415,7 @@ export const DeliveryDashboard: React.FC = () => {
                   size="sm" 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => setActiveSection('ratings')}
+                  onClick={() => handleSectionChange('ratings')}
                 >
                   Ver Calificaciones Recibidas
                 </Button>
@@ -391,10 +443,6 @@ export const DeliveryDashboard: React.FC = () => {
       default:
         return renderDashboardContent();
     }
-  };
-
-  const handleSectionChange = (section: string) => {
-    setActiveSection(section);
   };
 
   return (
@@ -437,7 +485,7 @@ export const DeliveryDashboard: React.FC = () => {
         <div className="hidden lg:block">
           <DeliverySidebar 
             activeSection={activeSection} 
-            setActiveSection={setActiveSection}
+            setActiveSection={handleSectionChange}
           />
         </div>
         

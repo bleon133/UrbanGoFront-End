@@ -453,7 +453,6 @@ export const UserDetail: React.FC<UserDetailProps> = ({ user, onBack }) => {
                       <SelectContent>
                         <SelectItem value="A1">A1 - Motocicletas hasta 125 cc</SelectItem>
                         <SelectItem value="A2">A2 - Motocicletas de cualquier cilindrada</SelectItem>
-                        <SelectItem value="B1">B1 - Automóviles, motocarros y cuatrimotos</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -470,9 +469,6 @@ export const UserDetail: React.FC<UserDetailProps> = ({ user, onBack }) => {
                         <SelectValue placeholder="Categoría de vehículo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="A1">A1 - Motos hasta 125 cc</SelectItem>
-                        <SelectItem value="A2">A2 - Motos de cualquier cilindrada</SelectItem>
-                        <SelectItem value="B1">B1 - Automóviles</SelectItem>
                         <SelectItem value="B2">B2 - Camionetas y camperos</SelectItem>
                         <SelectItem value="B3">B3 - Vehículos de servicio público</SelectItem>
                         <SelectItem value="C1">C1 - Camiones rígidos</SelectItem>

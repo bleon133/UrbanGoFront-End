@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { ClientSidebar } from './ClientSidebar';
+import { ClientSidebar, CLIENT_SECTION_MODULES } from './ClientSidebar';
+import type { ClientSection } from './ClientSidebar';
 import { VehicleAvailability } from './client/VehicleAvailability';
 import { CreateHomeDeliveryReservation } from './client/CreateHomeDeliveryReservation';
 import { ReservationHistory } from './client/ReservationHistory';
@@ -25,16 +26,42 @@ import {
   Home,
   Package
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+const CLIENT_SECTION_ORDER: ClientSection[] = [
+  'overview',
+  'availability',
+  'new-reservation',
+  'history',
+  'request-delivery',
+  'my-deliveries',
+  'profile',
+];
+
 export const ClientDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
-  const [activeSection, setActiveSection] = useState('overview');
+  const { user, logout, permissions } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
+  const canAccessSection = useCallback(
+    (section: ClientSection) => {
+      const moduleKey = CLIENT_SECTION_MODULES[section];
+      if (!moduleKey) return true;
+      const modulePerm = permissions[moduleKey];
+      return modulePerm ? modulePerm.puedeVer : true;
+    },
+    [permissions]
+  );
+
+  const getFirstAllowedSection = useCallback((): ClientSection => {
+    return CLIENT_SECTION_ORDER.find(section => canAccessSection(section)) ?? 'overview';
+  }, [canAccessSection]);
+
+  const [activeSection, setActiveSection] = useState<ClientSection>(() => getFirstAllowedSection());
+
   // Sections supported by routing
-  const sections = new Set([
+  const sections = new Set<ClientSection>([
     'overview',
     'availability',
     'new-reservation',
@@ -44,7 +71,7 @@ export const ClientDashboard: React.FC = () => {
     'profile',
   ]);
 
-  const sectionToPath = (section: string) => {
+  const sectionToPath = (section: ClientSection): string => {
     switch (section) {
       case 'availability':
         return '/availability';
@@ -64,14 +91,14 @@ export const ClientDashboard: React.FC = () => {
     }
   };
 
-  const pathToSection = (pathname: string): string => {
+  const pathToSection = (pathname: string): ClientSection => {
     // Support both new top-level paths and legacy /dashboard/<section>
     if (pathname === '/dashboard' || pathname === '/dashboard/') return 'overview';
     const legacyParts = pathname.split('/').filter(Boolean);
     const idx = legacyParts.indexOf('dashboard');
     if (idx >= 0) {
       const sec = legacyParts[idx + 1];
-      if (sec && sections.has(sec)) return sec;
+      if (sec && sections.has(sec as ClientSection)) return sec as ClientSection;
       return 'overview';
     }
     // New top-level mapping
@@ -97,17 +124,38 @@ export const ClientDashboard: React.FC = () => {
   const hasSyncedRef = useRef(false);
   useEffect(() => {
     const normalized = pathToSection(location.pathname);
-    if (normalized !== activeSection) setActiveSection(normalized);
+    const allowedSection = canAccessSection(normalized) ? normalized : getFirstAllowedSection();
+    if (allowedSection !== activeSection) {
+      setActiveSection(allowedSection);
+    }
+    if (allowedSection !== normalized) {
+      navigate(sectionToPath(allowedSection), { replace: true });
+    }
     hasSyncedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, canAccessSection, getFirstAllowedSection, navigate]);
+
+  useEffect(() => {
+    if (!canAccessSection(activeSection)) {
+      const fallback = getFirstAllowedSection();
+      setActiveSection(fallback);
+      navigate(sectionToPath(fallback), { replace: true });
+    }
+  }, [activeSection, canAccessSection, getFirstAllowedSection, navigate]);
 
   // Navegar solo cuando el usuario cambia sección explícitamente (desde la UI)
   // Evitamos empujar a /dashboard en montajes o navegación directa por URL
   // La función handleSectionChange se encarga de hacer navigate
   const [preselectedVehicle, setPreselectedVehicle] = useState<any>(null);
 
-  const quickActions = [
+  const quickActions: Array<{
+    id: ClientSection;
+    title: string;
+    description: string;
+    icon: LucideIcon;
+    color: string;
+    count: string | null;
+  }> = [
     {
       id: 'availability',
       title: 'Ver Vehículos',
@@ -140,7 +188,7 @@ export const ClientDashboard: React.FC = () => {
       color: 'bg-orange-500',
       count: '3'
     }
-  ];
+  ].filter(action => canAccessSection(action.id));
 
   const accountStats = [
     { label: 'Reservas Activas', value: '3', icon: Calendar },
@@ -180,7 +228,7 @@ export const ClientDashboard: React.FC = () => {
       status: 'Confirmada',
       amount: '$16.000'
     }
-  ];
+  ].filter(action => canAccessSection(action.id));
 
   const recentHistory = [
     {
@@ -289,7 +337,7 @@ export const ClientDashboard: React.FC = () => {
               <Card 
                 key={index} 
                 className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleSectionChange(action.id as string)}
+                onClick={() => handleSectionChange(action.id)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-3">
@@ -444,10 +492,14 @@ export const ClientDashboard: React.FC = () => {
     </div>
   );
 
-  const handleSectionChange = (section: string) => {
-    setActiveSection(section);
-    navigate(sectionToPath(section));
-  };
+  const handleSectionChange = useCallback(
+    (section: ClientSection) => {
+      if (!canAccessSection(section)) return;
+      setActiveSection(section);
+      navigate(sectionToPath(section));
+    },
+    [canAccessSection, navigate]
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">

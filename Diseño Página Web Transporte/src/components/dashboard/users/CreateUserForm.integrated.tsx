@@ -164,11 +164,12 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({ onBack, onSave }
         gender: formData.gender ? (formData.gender as string).toUpperCase() : null,
         phone: formData.phone || null,
         userType: formData.userType === 'admin' ? 'ADMINISTRADOR' : (formData.userType === 'delivery' ? 'DOMICILIARIO' : (formData.userType === 'maintenance' ? 'MANTENIMIENTO' : 'CLIENTE')),
-        disponibilidadLaboral: formData.motorcycleLicenseCategory || null,
+        disponibilidadLaboral: null,
         contactoEmergencia: formData.emergencyContact || null,
         numeroEmergencia: formData.emergencyPhone || null,
         numeroLicencia: formData.licenseNumber || null,
-        categoriaMoto: formData.vehicleCategory || null,
+        categoriaMoto: formData.motorcycleLicenseCategory || null,
+        categoriaVehiculo: formData.vehicleCategory || null,
         experienciaPrevia: formData.experience || null,
       };
       const fd = new FormData();

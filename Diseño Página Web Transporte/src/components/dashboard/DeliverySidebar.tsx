@@ -15,10 +15,28 @@ import {
   Menu,
   Bike
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+type DeliverySection =
+  | 'dashboard'
+  | 'available'
+  | 'active'
+  | 'vehicle-deliveries'
+  | 'ratings'
+  | 'profile';
+
+export const DELIVERY_SECTION_MODULES: Record<DeliverySection, string | null> = {
+  dashboard: 'RESUMEN',
+  available: 'PAQUETES',
+  active: 'ACTIVO',
+  'vehicle-deliveries': 'VEHICULOS',
+  ratings: 'CALIFICACIONES',
+  profile: 'MI_PERFIL',
+};
 
 interface DeliverySidebarProps {
-  activeSection: string;
-  setActiveSection: (section: string) => void;
+  activeSection: DeliverySection;
+  setActiveSection: (section: DeliverySection) => void;
   isMobile?: boolean;
 }
 
@@ -27,7 +45,14 @@ export const DeliverySidebar: React.FC<DeliverySidebarProps> = ({
   setActiveSection,
   isMobile = false
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, permissions } = useAuth();
+
+  const canViewSection = (section: DeliverySection) => {
+    const moduleKey = DELIVERY_SECTION_MODULES[section];
+    if (!moduleKey) return true;
+    const modulePerm = permissions[moduleKey];
+    return modulePerm ? modulePerm.puedeVer : true;
+  };
 
   const menuItems = [
     {
@@ -72,7 +97,13 @@ export const DeliverySidebar: React.FC<DeliverySidebarProps> = ({
       description: 'Configuración de cuenta',
       badge: null
     }
-  ];
+  ] as Array<{
+    id: DeliverySection;
+    icon: LucideIcon;
+    label: string;
+    description: string;
+    badge?: string | null;
+  }>;
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -107,7 +138,7 @@ export const DeliverySidebar: React.FC<DeliverySidebarProps> = ({
       {/* Navigation */}
       <div className="flex-1 p-4 overflow-y-auto">
         <nav className="space-y-2">
-          {menuItems.map((item) => {
+          {menuItems.filter(item => canViewSection(item.id)).map((item) => {
             const IconComponent = item.icon;
             const isActive = activeSection === item.id;
             

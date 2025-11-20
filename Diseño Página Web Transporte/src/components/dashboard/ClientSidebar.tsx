@@ -10,24 +10,50 @@ import {
   Search,
   Home,
   Menu,
-  X,
   Package,
   Navigation
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '../ui/sheet';
 import { VisuallyHidden } from '../ui/visually-hidden';
+import type { LucideIcon } from 'lucide-react';
+
+export type ClientSection =
+  | 'overview'
+  | 'availability'
+  | 'new-reservation'
+  | 'history'
+  | 'request-delivery'
+  | 'my-deliveries'
+  | 'profile';
+
+export const CLIENT_SECTION_MODULES: Record<ClientSection, string | null> = {
+  overview: 'RESUMEN',
+  availability: 'DISPONIBILIDAD',
+  'new-reservation': 'NUEVA_RESERVA',
+  history: 'MIS_RESERVAS',
+  'request-delivery': 'SOLICITAR_DOMICILIO',
+  'my-deliveries': 'MIS_DOMICILIOS',
+  profile: 'MI_PERFIL',
+};
 
 interface ClientSidebarProps {
-  activeSection: string;
-  onSectionChange: (section: string) => void;
+  activeSection: ClientSection;
+  onSectionChange: (section: ClientSection) => void;
 }
 
 export const ClientSidebar: React.FC<ClientSidebarProps> = ({ 
   activeSection, 
   onSectionChange 
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, permissions } = useAuth();
+
+  const canViewSection = (section: ClientSection) => {
+    const moduleKey = CLIENT_SECTION_MODULES[section];
+    if (!moduleKey) return true;
+    const modulePerm = permissions[moduleKey];
+    return modulePerm ? modulePerm.puedeVer : true;
+  };
 
   const menuItems = [
     {
@@ -74,7 +100,13 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({
       label: 'Mi Perfil',
       description: 'Configuración de cuenta'
     }
-  ];
+  ] as Array<{
+    id: ClientSection;
+    icon: LucideIcon;
+    label: string;
+    description: string;
+    badge?: string | null;
+  }>;
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -109,7 +141,7 @@ export const ClientSidebar: React.FC<ClientSidebarProps> = ({
       {/* Navigation */}
       <div className="flex-1 p-4 overflow-y-auto">
         <nav className="space-y-2">
-          {menuItems.map((item) => {
+          {menuItems.filter(item => canViewSection(item.id)).map((item) => {
             const IconComponent = item.icon;
             const isActive = activeSection === item.id;
             

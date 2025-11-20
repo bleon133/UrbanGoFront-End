@@ -1,16 +1,31 @@
 import { Wrench, ClipboardList, User, LogOut } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "../../contexts/AuthContext";
 
+export type MaintenanceView = 'pending' | 'profile';
+
+export const MAINTENANCE_SECTION_MODULES: Record<MaintenanceView, string | null> = {
+  pending: 'GESTION_TAREAS',
+  profile: 'MI_PERFIL',
+};
+
 interface MaintenanceSidebarProps {
-  activeView: string;
-  onViewChange: (view: string) => void;
+  activeView: MaintenanceView;
+  onViewChange: (view: MaintenanceView) => void;
 }
 
 export function MaintenanceSidebar({ activeView, onViewChange }: MaintenanceSidebarProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, permissions } = useAuth();
 
-  const menuItems = [
+  const canViewSection = (view: MaintenanceView) => {
+    const moduleKey = MAINTENANCE_SECTION_MODULES[view];
+    if (!moduleKey) return true;
+    const modulePerm = permissions[moduleKey];
+    return modulePerm ? modulePerm.puedeVer : true;
+  };
+
+  const menuItems: Array<{ id: MaintenanceView; label: string; icon: LucideIcon }> = [
     { id: 'pending', label: 'Gestión de Tareas', icon: ClipboardList },
     { id: 'profile', label: 'Mi Perfil', icon: User },
   ];
@@ -32,10 +47,10 @@ export function MaintenanceSidebar({ activeView, onViewChange }: MaintenanceSide
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => {
+        {menuItems.filter(item => canViewSection(item.id)).map((item) => {
           const Icon = item.icon;
           const isActive = activeView === item.id;
-          
+
           return (
             <Button
               key={item.id}
