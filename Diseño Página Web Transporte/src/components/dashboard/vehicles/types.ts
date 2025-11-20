@@ -12,6 +12,9 @@ export interface Vehicle {
   branchId: string;
   branchName?: string;
   photo?: string;
+  tecnomecanicaExpiration?: string;
+  soatExpiration?: string;
+  preventiveMaintenanceDate?: string;
 }
 
 export interface VehiclePayload {
@@ -26,6 +29,9 @@ export interface VehiclePayload {
   maxSpeed?: number;
   status: string;
   branchId: string;
+  tecnomecanicaExpiration?: string;
+  soatExpiration?: string;
+  preventiveMaintenanceDate?: string;
 }
 
 export interface BranchOption {

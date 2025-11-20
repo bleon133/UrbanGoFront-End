@@ -35,6 +35,9 @@ const mapSummaryToVehicle = (summary: any): Vehicle => ({
   branchId: summary.sucursalId ? String(summary.sucursalId) : '',
   branchName: summary.sucursalNombre || '',
   photo: withPhoto(summary.foto),
+  tecnomecanicaExpiration: summary.vencimientoTecnomecanica || '',
+  soatExpiration: summary.vencimientoSoat || '',
+  preventiveMaintenanceDate: summary.fechaMantenimientoPreventivo || '',
 });
 
 const mapDetailToVehicle = (detail: any): Vehicle => ({
@@ -51,6 +54,9 @@ const mapDetailToVehicle = (detail: any): Vehicle => ({
   branchId: detail.sucursalId ? String(detail.sucursalId) : '',
   branchName: detail.sucursalNombre || '',
   photo: withPhoto(detail.foto),
+  tecnomecanicaExpiration: detail.vencimientoTecnomecanica || '',
+  soatExpiration: detail.vencimientoSoat || '',
+  preventiveMaintenanceDate: detail.fechaMantenimientoPreventivo || '',
 });
 
 const buildPayload = (vehicle: VehiclePayload) => ({
@@ -64,6 +70,9 @@ const buildPayload = (vehicle: VehiclePayload) => ({
   peso: vehicle.weight != null ? Number(vehicle.weight) : null,
   velocidadMax: vehicle.maxSpeed != null ? Number(vehicle.maxSpeed) : null,
   estado: vehicle.status || 'disponible',
+  vencimientoTecnomecanica: vehicle.tecnomecanicaExpiration || null,
+  vencimientoSoat: vehicle.soatExpiration || null,
+  fechaMantenimientoPreventivo: vehicle.preventiveMaintenanceDate || null,
 });
 
 export const VehiclesManagement: React.FC = () => {

@@ -34,6 +34,9 @@ export const CreateVehicleForm: React.FC<CreateVehicleFormProps> = ({ branches, 
     maxSpeed: undefined,
     status: 'disponible',
     branchId: '',
+    tecnomecanicaExpiration: '',
+    soatExpiration: '',
+    preventiveMaintenanceDate: '',
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
@@ -224,6 +227,33 @@ export const CreateVehicleForm: React.FC<CreateVehicleFormProps> = ({ branches, 
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Vencimiento tecnomecánica</Label>
+              <Input
+                type="date"
+                value={formData.tecnomecanicaExpiration || ''}
+                onChange={(e) => handleChange('tecnomecanicaExpiration', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Vencimiento SOAT</Label>
+              <Input
+                type="date"
+                value={formData.soatExpiration || ''}
+                onChange={(e) => handleChange('soatExpiration', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Próximo mantenimiento preventivo</Label>
+              <Input
+                type="date"
+                value={formData.preventiveMaintenanceDate || ''}
+                onChange={(e) => handleChange('preventiveMaintenanceDate', e.target.value)}
+              />
             </div>
           </div>
 
