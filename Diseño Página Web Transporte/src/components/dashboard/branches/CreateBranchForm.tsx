@@ -306,6 +306,9 @@ export const CreateBranchForm: React.FC<CreateBranchFormProps> = ({ onBack, onSa
     if (!formData.longitude.trim()) newErrors.push('La longitud es requerida');
     if (!formData.openingHours.trim()) newErrors.push('El horario de apertura es requerido');
     if (!formData.closingHours.trim()) newErrors.push('El horario de cierre es requerido');
+    if (!formData.accountNumber.trim()) newErrors.push('El número de cuenta bancaria es requerido');
+    if (!formData.accountType) newErrors.push('El tipo de cuenta es requerido');
+    if (!formData.bank) newErrors.push('Debe seleccionar un banco');
 
     // Validación de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

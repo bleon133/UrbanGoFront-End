@@ -58,6 +58,7 @@ const normalizeBranch = (incoming: Branch): Branch => {
     accountNumber: incoming.accountNumber || '',
     accountType: incoming.accountType || '',
     bank: incoming.bank || '',
+    accountId: incoming.accountId ?? null,
     openingHours: incoming.openingHours || '',
     closingHours: incoming.closingHours || '',
     ciudadId: incoming.ciudadId ?? null,
@@ -397,6 +398,9 @@ export const BranchDetail: React.FC<BranchDetailProps> = ({ branch, onBack, onSa
     if (!formData.address.trim()) newErrors.push('La dirección es requerida');
     if (!formData.ciudadId) newErrors.push('La ciudad es requerida');
     if (!formData.barrioId) newErrors.push('El barrio es requerido');
+    if (!formData.accountNumber?.trim()) newErrors.push('El número de cuenta bancaria es requerido');
+    if (!formData.accountType) newErrors.push('El tipo de cuenta es requerido');
+    if (!formData.bank) newErrors.push('Debe seleccionar un banco');
 
     return newErrors;
   };

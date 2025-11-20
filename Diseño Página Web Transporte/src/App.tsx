@@ -29,15 +29,7 @@ export default function App() {
           <Route path="/my-deliveries" element={<ClientDashboard />} />
           <Route path="/profile" element={<ClientDashboard />} />
           {/* Admin top-level */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<AdminDashboard />} />
-          <Route path="/admin/branches" element={<AdminDashboard />} />
-          <Route path="/admin/vehicles" element={<AdminDashboard />} />
-          <Route path="/admin/maintenance" element={<AdminDashboard />} />
-          <Route path="/admin/transport-map" element={<AdminDashboard />} />
-          <Route path="/admin/reservations" element={<AdminDashboard />} />
-          <Route path="/admin/deliveries" element={<AdminDashboard />} />
-          <Route path="/admin/rates" element={<AdminDashboard />} />
+          <Route path="/admin/*" element={<AdminDashboard />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
